@@ -334,10 +334,7 @@ fill: /* emulate loops */
 	/* so we are done filling parent. */
 complete: /* emulate return from call */
 	if (parent == top_parent) {
-		if (pos != ebuf) {
-			/* XXX do this outside */
-			CN_CBOR_FAIL(CN_CBOR_ERR_NOT_ALL_DATA_CONSUMED);
-		}
+		pb->err = CN_CBOR_ERR_NOT_ALL_DATA_CONSUMED;
 		pb->buf = pos;
 		return cb;
 	}
@@ -363,6 +360,11 @@ cn_cbor *cn_cbor_decode(const unsigned char *buf, size_t len CBOR_CONTEXT, cn_cb
 	pb.ebuf = (unsigned char *)buf + len;
 	pb.err = CN_CBOR_NO_ERROR;
 	ret = decode_item(&pb CBOR_CONTEXT_PARAM, &catcher);
+	
+	if (errp) {
+		errp->err = pb.err;
+		errp->pos = pb.buf - (unsigned char *)buf;
+	}
 	if (ret != NULL) {
 		/* mark as top node */
 		ret->parent = NULL;
